@@ -71,6 +71,9 @@ export default function Sidebar({
           <Link href="/roadmap" onClick={onClose} className="block rounded px-3 py-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-1">
             Roadmap
           </Link>
+          <Link href="/about" onClick={onClose} className="block rounded px-3 py-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-1">
+            About
+          </Link>
         </nav>
 
         <div className="p-4">

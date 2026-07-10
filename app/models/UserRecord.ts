@@ -53,6 +53,8 @@ export interface IUserRecord extends Document {
   roadmapCards: IRoadmapCard[];
   roadmapCardTasks: Record<string, { tasks: ITaskItem[]; sections?: IRoadmapSection[] }>;
   taskCompletionHistory: Record<string, IDailyTaskProgress>;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const TaskItemSchema = new Schema<ITaskItem>({

@@ -5,9 +5,11 @@ import React, { useEffect, useState } from "react";
 import NavBar from "./NavBar";
 import Sidebar from "./Sidebar";
 import DbSync from "./DbSync";
+import { usePathname } from "next/navigation";
 
 export default function AppShell({ children }: { children: React.ReactNode }): React.ReactElement {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const closeSidebar = () => setIsSidebarOpen(false);
@@ -15,6 +17,16 @@ export default function AppShell({ children }: { children: React.ReactNode }): R
     window.addEventListener("resize", closeSidebar);
     return () => window.removeEventListener("resize", closeSidebar);
   }, []);
+
+  const isAdminRoute = pathname?.startsWith("/admin");
+
+  if (isAdminRoute) {
+    return (
+      <main className="flex-1 flex flex-col min-h-screen bg-black">
+        {children}
+      </main>
+    );
+  }
 
   return (
     <>
