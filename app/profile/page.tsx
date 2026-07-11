@@ -5,6 +5,11 @@ import {
   loadStoredProfile as loadProfileData,
   saveProfileData,
 } from "@/app/lib/storage";
+import { login, signup } from "@/app/lib/api/auth";
+import Button from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Textarea from "@/app/components/ui/Textarea";
+import Card from "@/app/components/ui/Card";
 
 const DEFAULT_ABOUT =
   "John is a product-focused developer who builds delightful user experiences. He enjoys working on full-stack projects, learning new technologies, and contributing to open-source. Contact at john@example.com.";
@@ -37,6 +42,7 @@ export default function ProfilePage(): React.ReactElement {
   // Validation error state
   const [validationError, setValidationError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -200,23 +206,9 @@ export default function ProfilePage(): React.ReactElement {
     }
 
     try {
+      setLoading(true);
       if (isLoginTab) {
-        // LOGIN MODE
-        const loginRes = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: enteredUsername,
-            password: authPassword,
-          })
-        });
-
-        const data = await loginRes.json();
-
-        if (!loginRes.ok) {
-          setAuthError(data.error || "Authentication failed.");
-          return;
-        }
+        const data = await login(enteredUsername, authPassword);
 
         // Successfully logged in! Save remote values and token to local storage
         window.localStorage.setItem("authToken", data.token);
@@ -247,25 +239,7 @@ export default function ProfilePage(): React.ReactElement {
         // Trigger page refresh
         window.dispatchEvent(new Event("localstorage-sync"));
       } else {
-        // SIGNUP MODE
-        // Create new record in MongoDB using the auth signup route
-        const registerRes = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: enteredUsername,
-            name: enteredName,
-            password: authPassword,
-            about: enteredAbout,
-          })
-        });
-
-        const data = await registerRes.json();
-
-        if (!registerRes.ok) {
-          setAuthError(data.error || "Failed to register");
-          return;
-        }
+        const data = await signup(enteredUsername, enteredName, authPassword, enteredAbout);
 
         // Save local storage token and profile
         window.localStorage.setItem("authToken", data.token);
@@ -291,6 +265,8 @@ export default function ProfilePage(): React.ReactElement {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setAuthError(errMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -298,7 +274,7 @@ export default function ProfilePage(): React.ReactElement {
   if (!isLoggedIn) {
     return (
       <div className="p-8 min-h-[calc(100vh-8rem)] flex items-center justify-center">
-        <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl p-8 shadow-2xl">
+        <Card className="w-full max-w-md p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-extrabold text-white">TaskComplet Profile</h2>
             <p className="text-sm text-zinc-400 mt-1">Please authenticate to manage your tasks</p>
@@ -341,10 +317,9 @@ export default function ProfilePage(): React.ReactElement {
                 <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">
                   Name
                 </label>
-                <input
+                <Input
                   value={authName}
                   onChange={(e) => setAuthName(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Suraj Kumar"
                   required
                 />
@@ -355,16 +330,13 @@ export default function ProfilePage(): React.ReactElement {
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">
                 Username
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-sm text-zinc-500">@</span>
-                <input
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  className="w-full h-10 pl-7 pr-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="username"
-                  required
-                />
-              </div>
+              <Input
+                value={authUsername}
+                onChange={(e) => setAuthUsername(e.target.value)}
+                prefixText="@"
+                placeholder="username"
+                required
+              />
               <p className="text-[10px] text-zinc-500 mt-1">
                 Contains only lowercase letters, numbers, underscores, or hyphens.
               </p>
@@ -374,11 +346,10 @@ export default function ProfilePage(): React.ReactElement {
               <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">
                 Password
               </label>
-              <input
+              <Input
                 type="password"
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="••••••"
                 required
               />
@@ -400,12 +371,10 @@ export default function ProfilePage(): React.ReactElement {
                     {authAbout.length}/200
                   </span>
                 </div>
-                <textarea
+                <Textarea
                   value={authAbout}
                   onChange={(e) => setAuthAbout(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Tell us about yourself..."
-                  rows={4}
                   maxLength={200}
                 />
               </div>
@@ -417,14 +386,15 @@ export default function ProfilePage(): React.ReactElement {
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
-              className="w-full h-10 mt-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg"
+              loading={loading}
+              className="w-full mt-2"
             >
               {isLoginTab ? "Access Account" : "Register Profile"}
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -444,10 +414,8 @@ export default function ProfilePage(): React.ReactElement {
                 aria-label="Profile image"
               >
                 {imageSrc ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageSrc} alt="Profile" className="w-full h-full object-cover" />
-                  </>
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={imageSrc} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <span>U</span>
                 )}
@@ -481,16 +449,17 @@ export default function ProfilePage(): React.ReactElement {
 
             {/* Display Mode metadata under avatar */}
             {!editing && (
-              <div className="text-center mt-4 space-y-1">
+              <div className="text-center mt-4 space-y-2">
                 <h2 className="text-xl font-semibold text-white">{name}</h2>
                 <p className="text-sm text-zinc-400">@{username}</p>
                 <div className="pt-2">
-                  <button
+                  <Button
                     onClick={handleStartEditing}
-                    className="px-4 py-1.5 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:text-white text-zinc-300 rounded text-sm transition-colors"
+                    variant="secondary"
+                    size="sm"
                   >
                     Edit Profile
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -513,25 +482,21 @@ export default function ProfilePage(): React.ReactElement {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Name</label>
-                    <input
+                    <Input
                       value={draftName}
                       onChange={(e) => setDraftName(e.target.value)}
-                      className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       placeholder="Enter your name"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Username</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-sm text-zinc-500">@</span>
-                      <input
-                        value={draftUsername}
-                        onChange={(e) => setDraftUsername(e.target.value)}
-                        className="w-full h-10 pl-7 pr-3 rounded bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="username"
-                      />
-                    </div>
+                    <Input
+                      value={draftUsername}
+                      onChange={(e) => setDraftUsername(e.target.value)}
+                      prefixText="@"
+                      placeholder="username"
+                    />
                     <p className="text-[11px] text-zinc-500 mt-1">Username must be unique and contain no spaces.</p>
                   </div>
 
@@ -542,10 +507,9 @@ export default function ProfilePage(): React.ReactElement {
                         {draftAbout.length}/200
                       </span>
                     </div>
-                    <textarea
+                    <Textarea
                       value={draftAbout}
                       onChange={(e) => setDraftAbout(e.target.value)}
-                      className="w-full p-3 rounded bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       placeholder="Tell us about yourself..."
                       rows={5}
                       maxLength={200}
@@ -562,18 +526,19 @@ export default function ProfilePage(): React.ReactElement {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 justify-end">
-                  <button
+                  <Button
                     onClick={handleSave}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition-colors"
+                    size="sm"
                   >
                     Save Changes
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => setEditing(false)}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-sm font-medium rounded transition-colors border border-zinc-700"
+                    variant="secondary"
+                    size="sm"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

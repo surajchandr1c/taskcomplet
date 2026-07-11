@@ -3,6 +3,7 @@ import { RoadmapSection } from "@/app/lib/storage";
 import AddTaskInput from "@/app/components/AddTaskInput";
 import RemoveButton from "@/app/components/RemoveButton";
 import TaskActions from "@/app/components/TaskActions";
+import EditButton from "@/app/components/EditButton";
 
 type RoadmapSectionCardProps = {
   section: RoadmapSection;
@@ -85,12 +86,10 @@ export default function RoadmapSectionCard({
 
         {editingSectionId !== section.id && (
           <div className="flex items-center gap-2">
-            <button
+            <EditButton
               onClick={() => onStartEditSection(section.id)}
-              className="rounded border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
-            >
-              Edit
-            </button>
+              className="border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 px-3"
+            />
             <button
               onClick={() => onRemoveHeading(section.id)}
               className="rounded border border-red-900/60 bg-red-950/40 px-3 py-1 text-xs text-red-400 transition-colors hover:bg-red-900/60 hover:text-red-300"

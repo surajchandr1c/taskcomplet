@@ -63,6 +63,12 @@ export const STORAGE_CARD_TASKS_KEY = "roadmapCardTasks";
 export const STORAGE_TASK_HISTORY_KEY = "taskCompletionHistory";
 export const STORAGE_HIDDEN_ROADMAP_SLUGS_KEY = "hiddenRoadmapSlugs";
 
+import { defaultFrontendCardData } from "./defaultFrontend";
+import { defaultBackendCardData } from "./defaultBackend";
+import { defaultMachineLearningCardData } from "./defaultMachineLearning";
+import { defaultOtherRoadmapCards, defaultOtherRoadmapsData } from "./defaultOtherRoadmaps";
+import { saveUserData } from "./api/user";
+
 const isClient = typeof window !== "undefined";
 
 function getLocalDateKey(date = new Date()) {
@@ -100,21 +106,14 @@ export async function syncToDatabase() {
     const taskHistoryStr = window.localStorage.getItem(STORAGE_TASK_HISTORY_KEY);
     const taskCompletionHistory = taskHistoryStr ? JSON.parse(taskHistoryStr) : {};
 
-    await fetch("/api/user-data", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        username,
-        name,
-        about,
-        tasks,
-        roadmapCards,
-        roadmapCardTasks,
-        taskCompletionHistory
-      })
+    await saveUserData(token, {
+      username,
+      name,
+      about,
+      tasks,
+      roadmapCards,
+      roadmapCardTasks,
+      taskCompletionHistory
     });
   } catch (e) {
     console.error("Database synchronization failed:", e);
@@ -168,7 +167,97 @@ export function loadRoadmapCards(): RoadmapCard[] {
   if (!isClient) return [];
   try {
     const stored = window.localStorage.getItem(STORAGE_ROADMAP_KEY);
-    return stored ? JSON.parse(stored) : [];
+    let cards: RoadmapCard[] = stored ? JSON.parse(stored) : [];
+    let updated = false;
+
+    const hasFrontend = cards.some((c) => c.slug === "frontend");
+    if (!hasFrontend) {
+      const defaultFrontendCard: RoadmapCard = {
+        title: "Frontend",
+        slug: "frontend",
+        description: "Complete guide to modern frontend web development.",
+        items: [
+          "Internet", "Version Control", "HTML", "CSS", "JavaScript",
+          "Package Managers", "Module Bundlers", "Linters & Formatters",
+          "TypeScript", "React", "Next.js", "State Management",
+          "API Handling", "Authentication", "Testing", "Performance Optimization",
+          "Web Security", "Browser APIs", "Progressive Web Apps (PWA)",
+          "Build & Deployment", "UI Libraries", "Animation Libraries",
+          "Design & UI/UX", "SEO", "MERN Stack Integration"
+        ]
+      };
+      cards = [defaultFrontendCard, ...cards];
+      updated = true;
+    }
+
+    const hasBackend = cards.some((c) => c.slug === "backend");
+    if (!hasBackend) {
+      const defaultBackendCard: RoadmapCard = {
+        title: "Backend",
+        slug: "backend",
+        description: "Complete guide to modern backend web development.",
+        items: [
+          "Internet Fundamentals", "Operating System (Linux)", "Version Control",
+          "Programming Language (Node.js)", "Package Managers", "Node.js Core",
+          "Express.js", "Databases", "ORM / ODM", "API Development",
+          "Authentication & Authorization", "Security", "File Handling", "Caching",
+          "Background Jobs & Queues", "Logging & Monitoring", "Testing", "Docker",
+          "CI/CD", "Deployment", "Cloud Services", "Performance Optimization",
+          "System Design", "DevOps Basics", "Advanced Backend", "MERN Stack Integration"
+        ]
+      };
+      cards = [defaultBackendCard, ...cards];
+      updated = true;
+    }
+
+    const mlIndex = cards.findIndex((c) => c.slug === "machin-learning");
+    if (mlIndex === -1) {
+      const defaultMLCard: RoadmapCard = {
+        title: "Machin Learning",
+        slug: "machin-learning",
+        description: "For AI and ML",
+        items: [
+          "Python Basics", "Mathematics for Machine Learning", "Python Libraries",
+          "Data Preprocessing", "Exploratory Data Analysis (EDA)", "Supervised Machine Learning (Regression)",
+          "Supervised Machine Learning (Classification)", "Unsupervised Learning", "Model Evaluation & Optimization",
+          "Ensemble Learning", "Deep Learning Fundamentals", "TensorFlow & Keras", "PyTorch",
+          "Computer Vision Basics", "Computer Vision (CNN & Object Detection)", "Natural Language Processing (NLP)",
+          "Time Series Analysis", "Reinforcement Learning", "Generative AI", "MLOps",
+          "Deployment", "Databases", "Big Data", "Cloud for ML", "Explainable AI & Production ML",
+          "Software Engineering for ML"
+        ]
+      };
+      cards = [defaultMLCard, ...cards];
+      updated = true;
+    } else if (!cards[mlIndex].items || cards[mlIndex].items.length < 26) {
+      cards[mlIndex].items = [
+        "Python Basics", "Mathematics for Machine Learning", "Python Libraries",
+        "Data Preprocessing", "Exploratory Data Analysis (EDA)", "Supervised Machine Learning (Regression)",
+        "Supervised Machine Learning (Classification)", "Unsupervised Learning", "Model Evaluation & Optimization",
+        "Ensemble Learning", "Deep Learning Fundamentals", "TensorFlow & Keras", "PyTorch",
+        "Computer Vision Basics", "Computer Vision (CNN & Object Detection)", "Natural Language Processing (NLP)",
+        "Time Series Analysis", "Reinforcement Learning", "Generative AI", "MLOps",
+        "Deployment", "Databases", "Big Data", "Cloud for ML", "Explainable AI & Production ML",
+        "Software Engineering for ML"
+      ];
+      updated = true;
+    }
+
+    defaultOtherRoadmapCards.forEach((otherCard) => {
+      const idx = cards.findIndex((c) => c.slug === otherCard.slug);
+      if (idx === -1) {
+        cards = [...cards, otherCard];
+        updated = true;
+      } else if (!cards[idx].items || cards[idx].items.length === 0) {
+        cards[idx].items = otherCard.items;
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      window.localStorage.setItem(STORAGE_ROADMAP_KEY, JSON.stringify(cards));
+    }
+    return cards;
   } catch {
     return [];
   }
@@ -228,11 +317,46 @@ export function saveCardTasks(value: CardTaskMap): void {
 export function loadCardDataForSlug(slug: string): CardData {
   const all = loadCardTasks();
   if (!all || typeof all !== "object") {
+    if (slug === "frontend") return defaultFrontendCardData;
+    if (slug === "backend") return defaultBackendCardData;
+    if (slug === "machin-learning") return defaultMachineLearningCardData;
+    if (defaultOtherRoadmapsData[slug]) return defaultOtherRoadmapsData[slug];
     return { tasks: [] };
   }
   const cardData = all[slug];
-  if (!cardData || typeof cardData !== "object") {
-    return { tasks: [] };
+  const otherSectionsCount = defaultOtherRoadmapsData[slug]?.sections?.length || 0;
+  if (
+    !cardData ||
+    typeof cardData !== "object" ||
+    !cardData.sections ||
+    cardData.sections.length === 0 ||
+    (slug === "frontend" && cardData.sections.length < 25) ||
+    (slug === "backend" && cardData.sections.length < 26) ||
+    (slug === "machin-learning" && cardData.sections.length < 26) ||
+    (otherSectionsCount > 0 && cardData.sections.length < otherSectionsCount)
+  ) {
+    if (slug === "frontend") {
+      all[slug] = defaultFrontendCardData;
+      saveCardTasks(all);
+      return defaultFrontendCardData;
+    }
+    if (slug === "backend") {
+      all[slug] = defaultBackendCardData;
+      saveCardTasks(all);
+      return defaultBackendCardData;
+    }
+    if (slug === "machin-learning") {
+      all[slug] = defaultMachineLearningCardData;
+      saveCardTasks(all);
+      return defaultMachineLearningCardData;
+    }
+    if (defaultOtherRoadmapsData[slug]) {
+      const data = defaultOtherRoadmapsData[slug];
+      all[slug] = data;
+      saveCardTasks(all);
+      return data;
+    }
+    return cardData || { tasks: [] };
   }
   return cardData;
 }

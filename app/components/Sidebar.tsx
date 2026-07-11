@@ -63,7 +63,7 @@ export default function Sidebar({
             Home
           </Link>
           <Link href="/add" onClick={onClose} className="block rounded px-3 py-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-1">
-            Add Task
+            Create Task List
           </Link>
           <Link href="/tasks" onClick={onClose} className="block rounded px-3 py-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-1">
             Task List

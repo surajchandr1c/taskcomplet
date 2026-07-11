@@ -4,11 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Calendar from "./components/Calendar";
 import { Task, loadStoredTasks, loadStoredProfile } from "@/app/lib/storage";
+import DashboardSkeleton from "@/app/components/skeletons/DashboardSkeleton";
+import Button from "@/app/components/ui/Button";
+import Card from "@/app/components/ui/Card";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profileName, setProfileName] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadAll = () => {
@@ -23,6 +27,7 @@ export default function Home() {
           setProfileName("");
           setIsLoggedIn(false);
         }
+        setLoading(false);
       });
     };
 
@@ -35,11 +40,21 @@ export default function Home() {
   const completed = isLoggedIn ? tasks.filter((task) => task.completed).length : 0;
   const pending = total - completed;
 
+  if (loading) {
+    return (
+      <div className="p-8 min-h-[calc(100vh-8rem)] flex items-center justify-center">
+        <div className="w-full max-w-6xl">
+          <DashboardSkeleton />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
       <main className="flex flex-1 w-full flex-col items-center py-12 px-6 bg-white dark:bg-black">
         <div className="w-full max-w-6xl">
-          <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+          <Card className="mb-8 p-6 shadow-2xl">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="text-xs uppercase tracking-[0.25em] text-zinc-500">
@@ -61,7 +76,7 @@ export default function Home() {
                 {isLoggedIn ? "Switch Account" : "Go to Login / Sign Up"}
               </Link>
             </div>
-          </div>
+          </Card>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.8fr)]">
             <div className="min-w-0">
@@ -75,8 +90,8 @@ export default function Home() {
                 <MetricCard label="Completed" value={isLoggedIn ? completed : null} />
               </div>
 
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-white">
-                <div className="flex items-center justify-between gap-3">
+              <Card className="p-4 text-white">
+                <div className="flex items-center justify-between gap-3 pb-2 border-b border-zinc-900">
                   <h2 className="text-xl font-medium">Tasks</h2>
                   {!isLoggedIn && <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">No user selected</span>}
                 </div>
@@ -89,7 +104,7 @@ export default function Home() {
                           <Link
                             key={task.id}
                             href={`/roadmap/${task.slug}`}
-                            className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
+                            className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 transition-colors hover:border-zinc-650 hover:bg-zinc-900"
                           >
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{task.title}</div>
@@ -134,7 +149,7 @@ export default function Home() {
                     Log in to load your tasks.
                   </div>
                 )}
-              </div>
+              </Card>
             </aside>
           </div>
         </div>
@@ -145,9 +160,9 @@ export default function Home() {
 
 function MetricCard({ label, value }: { label: string; value: number | null }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-white">
+    <Card className="p-4 text-white">
       <div className="text-sm uppercase tracking-[0.2em] text-zinc-400">{label}</div>
       <div className="mt-3 text-3xl font-semibold">{value === null ? "-" : value}</div>
-    </div>
+    </Card>
   );
 }

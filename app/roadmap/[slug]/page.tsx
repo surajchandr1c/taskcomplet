@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import AccessLocked from "@/app/components/AccessLocked";
 import PageHeader from "@/app/components/PageHeader";
 import PageFallback from "@/app/components/PageFallback";
+import RoadmapSkeleton from "@/app/components/skeletons/RoadmapSkeleton";
+import Button from "@/app/components/ui/Button";
 
 import {
   RoadmapCard,
   TaskItem,
   RoadmapSection,
+  Task,
   loadCardDataForSlug,
   saveCardDataForSlug,
   loadRoadmapCards,
@@ -77,6 +80,7 @@ export default function RoadmapDetail() {
     const loadAll = () => {
       const existing = loadCardDataForSlug(card.slug);
       const profile = loadStoredProfile();
+      const storedTasks = loadStoredTasks();
 
       // Determine sections to set and any persistence needed
       let sectionsToSet: RoadmapSection[] | null = null;
@@ -128,7 +132,13 @@ export default function RoadmapDetail() {
   }, [card]);
 
   if (!loaded) {
-    return <PageFallback state="loading" />;
+    return (
+      <div className="p-8">
+        <div className="mx-auto max-w-7xl">
+          <RoadmapSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (!isLoggedIn) {
@@ -346,15 +356,14 @@ export default function RoadmapDetail() {
                 />
               ) : (
                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => setIsAddingHeading(true)}
-                    className="inline-flex h-10 px-4 items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                    variant="secondary"
+                    icon={<span className="text-lg leading-none">+</span>}
                     aria-label="Add new heading"
                   >
-                    <span className="text-lg leading-none">+</span>
-                    <span>Add Section Heading</span>
-                  </button>
+                    Add Section Heading
+                  </Button>
                 </div>
               )}
             </div>

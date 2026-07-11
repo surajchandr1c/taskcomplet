@@ -7,12 +7,11 @@ import React, { useState, useEffect } from "react";
 
 import {
   RoadmapCard,
-  Task,
   loadRoadmapCards,
   saveRoadmapCards,
+  loadStoredProfile,
   loadStoredTasks,
   saveStoredTasks,
-  loadStoredProfile,
 } from "@/app/lib/storage";
 
 // Removed demo slug list — no reserved demo slugs.
@@ -58,7 +57,7 @@ export default function AddPage(): React.ReactElement {
     const existingCards = loadRoadmapCards();
     const duplicate = existingCards.some((card) => card.slug === slug);
     if (duplicate) {
-      alert("A roadmap card with this name already exists.");
+      alert("A task list with this name already exists.");
       return;
     }
 
@@ -70,35 +69,35 @@ export default function AddPage(): React.ReactElement {
 
     saveRoadmapCards([...existingCards, newCard]);
 
-    const storedTasks = loadStoredTasks();
-    const nextTask: Task = {
+    const existingTasks = loadStoredTasks();
+    const newCardTask = {
       id: Date.now(),
-      title: newCard.title,
+      title: title.trim(),
       completed: false,
-      slug: newCard.slug,
+      slug,
     };
-    saveStoredTasks([...storedTasks, nextTask]);
+    saveStoredTasks([...existingTasks, newCardTask]);
 
-    alert("Roadmap card created and task added.");
+    alert("Task list created successfully.");
     setTitle("");
     setDescription("");
   };
 
   if (!isLoggedIn) {
-    return <AccessLocked message="Please log in or register your profile to create new roadmaps and tasks." />;
+    return <AccessLocked message="Please log in or register your profile to create new task lists." />;
   }
 
   return (
     <div className="p-8">
-      <PageHeader title="Create a New Roadmap" className="mb-4" />
+      <PageHeader title="Create a new task list" className="mb-4" />
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
         <div>
-          <label className="block text-sm font-medium mb-1 text-zinc-300">Card Name</label>
+          <label className="block text-sm font-medium mb-1 text-zinc-300">Task List Name</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full border border-zinc-800 px-3 py-2 rounded bg-zinc-950 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Enter roadmap card name"
+            placeholder="Enter task list name"
           />
         </div>
 
@@ -108,7 +107,7 @@ export default function AddPage(): React.ReactElement {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full border border-zinc-800 px-3 py-2 rounded bg-zinc-950 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Enter card description"
+            placeholder="Enter task list description"
             rows={4}
           />
         </div>

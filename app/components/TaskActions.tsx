@@ -1,6 +1,7 @@
 import React from "react";
 import { TaskItem } from "@/app/lib/storage";
 import RemoveButton from "@/app/components/RemoveButton";
+import EditButton from "@/app/components/EditButton";
 
 type TaskActionsProps = {
   sectionId: number;
@@ -46,13 +47,7 @@ export default function TaskActions({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => onStartEditTask(task.id, task.text)}
-        className="rounded border border-zinc-800 bg-zinc-900/40 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-white"
-      >
-        Edit
-      </button>
+      <EditButton onClick={() => onStartEditTask(task.id, task.text)} />
       <RemoveButton onClick={() => onRemoveTask(sectionId, task.id)} />
     </>
   );
