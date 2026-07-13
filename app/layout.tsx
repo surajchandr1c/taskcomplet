@@ -4,6 +4,7 @@ import "./globals.css";
 import Footer from "./components/Footer";
 import AppShell from "./components/AppShell";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,9 +20,9 @@ export const metadata: Metadata = {
   title: "TaskComplet — Manage Tasks & Roadmaps",
   description: "A modern task and roadmap planning application built with Next.js.",
   icons: {
-    icon: "/favicone.png",
-    shortcut: "/favicone.png",
-    apple: "/favicone.png",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 

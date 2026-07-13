@@ -213,7 +213,7 @@ export function loadRoadmapCards(): RoadmapCard[] {
     const mlIndex = cards.findIndex((c) => c.slug === "machin-learning");
     if (mlIndex === -1) {
       const defaultMLCard: RoadmapCard = {
-        title: "Machin Learning",
+        title: "Machine Learning",
         slug: "machin-learning",
         description: "For AI and ML",
         items: [

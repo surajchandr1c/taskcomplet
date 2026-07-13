@@ -84,7 +84,7 @@ export default function DbSync() {
           if (mlIndex === -1) {
             remoteRoadmaps = [
               {
-                title: "Machin Learning",
+                title: "Machine Learning",
                 slug: "machin-learning",
                 description: "For AI and ML",
                 items: [
